@@ -47,8 +47,12 @@ class Snake(object):
         pass
 
     def move(self):
-        # TODO: See section 1, "Move the snake!". You will be revisiting this section a few times.   
-        pass
+        # TODO: See section 1, "Move the snake!". You will be revisiting this section a few times.
+        for i in range(len(self.body)):
+            new_x = self.body[i][0] + DIR[self.direction][0]
+            new_y = self.body[i][1] + DIR[self.direction][1]
+            self.body[i] = (new_x, new_y)
+        #pass
 
     def kill(self):
         # TODO: See section 11, "Try again!"
