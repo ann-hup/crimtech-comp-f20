@@ -16,12 +16,16 @@ DIR = {
     'r' : (1,0)
 }
 
+green = (0,255,0)
+blue = (0,0,255)
 
 class Snake(object):
     l = 1
     body = [(WIDTH // 2, HEIGHT // 2)]
     direction = 'r'
     dead = False
+    change_length = False
+    moving = False
 
     def __init__(self):
         pass
@@ -29,30 +33,44 @@ class Snake(object):
     def get_color(self, i):
         hc = (40,50,100)
         tc = (90,130,255)
-        return tuple(map(lambda x,y: (x * (self.l - i) + y * i ) / self.l, hc, tc))
+        #return tuple(map(lambda x,y: (x * (self.l - i) + y * i ) // self.l, hc, tc))
+        return hc
 
     def get_head(self):
         return self.body[0]
 
     def turn(self, dir):
-        # TODO: See section 3, "Turning the snake".
-        pass
+        self.direction = dir
 
     def collision(self, x, y):
-        # TODO: See section 2, "Collisions", and section 4, "Self Collisions"
-        pass
+        if x < 0 or x > 23 or y < 0 or y > 23:
+            return True
+        if (x,y) in self.body[1:]:
+            return True
+        return False
+
+    def get_body(self):
+        return self.body
     
     def coyote_time(self):
         # TODO: See section 13, "coyote time".
         pass
 
     def move(self):
-        # TODO: See section 1, "Move the snake!". You will be revisiting this section a few times.
-        for i in range(len(self.body)):
-            new_x = self.body[i][0] + DIR[self.direction][0]
-            new_y = self.body[i][1] + DIR[self.direction][1]
-            self.body[i] = (new_x, new_y)
-        #pass
+        for i in range(len(self.body) - 1, 0, -1):
+            self.body[i] = self.body[i-1]
+
+        self.body[0] = tuple(map(lambda i, j: i + j, self.body[0], DIR[self.direction]))
+
+        if self.collision(self.body[0][0], self.body[0][1]):
+            self.kill()
+        
+        tail = self.body[len(self.body) - 1]
+        
+        if self.change_length:
+            self.change_length = False
+            self.body.append(tail)
+
 
     def kill(self):
         # TODO: See section 11, "Try again!"
@@ -85,8 +103,12 @@ class Snake(object):
             self.handle_keypress(event.key)
     
     def wait_for_key(self):
-        # TODO: see section 10, "wait for user input".
-        pass
+        #Implementing Feature 10
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    self.moving = True
+                    return
 
 
 # returns an integer between 0 and n, inclusive.
@@ -100,8 +122,12 @@ class Apple(object):
         self.place([])
 
     def place(self, snake):
-        # TODO: see section 6, "moving the apple".
-        pass
+        x_pos = rand_int(23)
+        y_pos = rand_int(23)
+        while (x_pos, y_pos) in snake:
+            x_pos = rand_int(23)
+            y_pos = rand_int(23)
+        self.position = (x_pos, y_pos)
 
     def draw(self, surface):
         pos = (self.position[0] * SIZE, self.position[1] * SIZE)
@@ -124,24 +150,35 @@ def main():
     surface = pygame.Surface(screen.get_size())
     surface = surface.convert()
     draw_grid(surface)
+    
 
     snake = Snake()
     apple = Apple()
 
     score = 0
+        
+    snake.wait_for_key()
 
     while True:
-        # TODO: see section 10, "incremental difficulty".
-        clock.tick(10)
+        #Implements Feature 9
+        length = len(snake.get_body())
+        clock.tick(5 + int(0.1 * length))
         snake.check_events()
-        draw_grid(surface)        
+        draw_grid(surface)
         snake.move()
 
         snake.draw(surface)
         apple.draw(surface)
-        # TODO: see section 5, "Eating the Apple".
+        if snake.get_head() == apple.position:
+            print("Snake at an apple!")
+            apple.place(snake.get_body())
+            snake.change_length = True
+            score += 1
         screen.blit(surface, (0,0))
-        # TODO: see section 8, "Display the Score"
+            # TODO: see section 8, "Display the Score"
+        font = pygame.font.SysFont('Georgia', 30)
+        text = font.render('Score: %d' % score, False, (0,0,0))
+        screen.blit(text, (5,5))
 
         pygame.display.update()
         if snake.dead:
@@ -149,5 +186,17 @@ def main():
             pygame.quit()
             sys.exit(0)
 
+
 if __name__ == "__main__":
     main()
+
+
+''' TOM'S MOVE METHOD
+if not self.moving:
+            return
+for i in range(len(self.body) - 1, 0, -1):
+            self.body[i] = self.body[i-1]
+        self.body[0] = tuple(map(lambda i, j: i + j, self.body[0], DIR[self.direction]))
+        if self.collision(self.body[0][0], self.body[0][1]):
+            self.kill()
+'''
